@@ -208,7 +208,7 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 						changeHeaderViewByState(PULL_To_REFRESH);
 					}
 					mPullState = PULL_To_REFRESH;
-				} else if(paddingTop > 0) {
+				} else if(paddingTop >= 0) {
 					if(mPullState == PULL_To_REFRESH) {
 						changeHeaderViewByState(RELEASE_To_REFRESH);
 					}
