@@ -282,6 +282,7 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 			}
 			
 			mSpinner.setVisibility(View.GONE);
+			mArrowView.setVisibility(View.VISIBLE);
 			mArrowView.clearAnimation();
 			mArrowView.setImageResource(R.drawable.ic_pulltorefresh_arrow);
 
