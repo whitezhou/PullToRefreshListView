@@ -8,9 +8,9 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -21,7 +21,6 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		view = (PullToRefreshListView)findViewById(R.id.pull_list);
-		
 		view.setAdapter(new BaseAdapter() {
 			
 			@Override
@@ -35,6 +34,7 @@ public class MainActivity extends Activity {
 					
 					@Override
 					public void onClick(View v) {
+						Log.e("d", "click");
 						view.onRefreshComplete();
 					}
 				});

@@ -3,6 +3,7 @@ package com.example.pulltorefreshlistviewdemo;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.LayoutInflater;
@@ -45,7 +46,6 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 	private int mHeaderViewPaddingTop;
 	private int mHeaderOrgPaddingTop;
 
-	private int startY;
 	private GestureDetector gestureDetector;
 
 	private int mPullState;
@@ -146,38 +146,39 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 	}
 
 	public boolean dispatchTouchEvent(MotionEvent event) {
-		if (gestureDetector.onTouchEvent(event)) {
+		if(onTouched.onTouchEvent(event)){
 			return true;
 		}
-		onTouched.onTouchEvent(event);
 		return super.dispatchTouchEvent(event);
 	}
 	
 	private interface OnTouchEventListener {
-		public void onTouchEvent(MotionEvent ev);
+		public boolean onTouchEvent(MotionEvent ev);
 	}
 	private OnTouchEventListener onTouched = new OnTouchEventListener() {
 		@Override
-		public void onTouchEvent(MotionEvent event) {
+		public boolean onTouchEvent(MotionEvent event) {
 			switch (event.getAction()) {
 			case MotionEvent.ACTION_CANCEL:
 			case MotionEvent.ACTION_UP:
 				if (isRecored) {
 					requestDisallowInterceptTouchEvent(false);
-				}
-				if (mPullState != REFRESHING) {
-					if (mPullState == PULL_To_REFRESH) {
-						mPullState = DONE;
-						changeHeaderViewByState(mPullState);
-					} else if (mPullState == RELEASE_To_REFRESH) {
-						mPullState = REFRESHING;
-						changeHeaderViewByState(mPullState);
-						onRefresh();
+					if (mPullState != REFRESHING) {
+						if (mPullState == PULL_To_REFRESH) {
+							mPullState = DONE;
+							changeHeaderViewByState(mPullState);
+						} else if (mPullState == RELEASE_To_REFRESH) {
+							mPullState = REFRESHING;
+							changeHeaderViewByState(mPullState);
+							onRefresh();
+						}
 					}
+					isRecored = false;
+					return true;
 				}
-				isRecored = false;
 				break;
 			}
+			return gestureDetector.onTouchEvent(event);
 		}
 	};
 
@@ -192,34 +193,32 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		@Override
 		public boolean onScroll(MotionEvent e1, MotionEvent e2,
 				float distanceX, float distanceY) {
-			startY = (int) e1.getY();
-			int tempY = (int) e2.getY();
 			int deltaY = (int) (e1.getY() - e2.getY());
-			if (!isRecored && isFirstItemVisible) {
-				if(deltaY < 0) {
+			if(mPullState != REFRESHING) {
+				if (!isRecored && isFirstItemVisible && deltaY < 0) {
 					isRecored = true;
 					requestDisallowInterceptTouchEvent(true);
 				}
-			}
-			if (mPullState != REFRESHING && isRecored) {
-				int paddingTop = mHeaderView.getPaddingTop();
-				if(paddingTop < 0 && paddingTop > mHeaderViewPaddingTop) {
-					if(mPullState == RELEASE_To_REFRESH) {
-						changeHeaderViewByState(PULL_To_REFRESH);
+				if (isRecored) {
+					int paddingTop = mHeaderView.getPaddingTop();
+					if(paddingTop < 0 && paddingTop > mHeaderViewPaddingTop) {
+						if(mPullState == RELEASE_To_REFRESH) {
+							changeHeaderViewByState(PULL_To_REFRESH);
+						}
+						mPullState = PULL_To_REFRESH;
+					} else if(paddingTop >= 0) {
+						if(mPullState == PULL_To_REFRESH) {
+							changeHeaderViewByState(RELEASE_To_REFRESH);
+						}
+						mPullState = RELEASE_To_REFRESH;
 					}
-					mPullState = PULL_To_REFRESH;
-				} else if(paddingTop >= 0) {
-					if(mPullState == PULL_To_REFRESH) {
-						changeHeaderViewByState(RELEASE_To_REFRESH);
-					}
-					mPullState = RELEASE_To_REFRESH;
+					
+					int topPadding = (int) (mHeaderViewPaddingTop - deltaY/2);
+					mHeaderView.setPadding(mHeaderView.getPaddingLeft(), topPadding,
+							mHeaderView.getPaddingRight(), mHeaderView.getPaddingBottom());
+					mHeaderView.invalidate();
+					return true;
 				}
-				
-				int topPadding = (int) (mHeaderViewPaddingTop - deltaY/2);
-				mHeaderView.setPadding(mHeaderView.getPaddingLeft(), topPadding,
-						mHeaderView.getPaddingRight(), mHeaderView.getPaddingBottom());
-				mHeaderView.invalidate();
-				return true;
 			}
 			return false;
 		}
